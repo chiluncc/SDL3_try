@@ -48,18 +48,23 @@ int main(int argc, char* args) {
 	}
 	global::init(800, 600, SDL_WINDOW_RESIZABLE);
 
-	auto image = loadImage("C:\\Users\\lenovo\\Desktop\\Yumekui_Merry.jpg");
+	auto image = loadImage("C:\\Users\\lenovo\\Desktop\\ceaabff28120b60ef3c9e6dd3ac74943.png");
 	
 	bool quit = false;
 	SDL_Event event;
 	SDL_zero(event);
+	bool show = false;
 	while (!quit) {
 		SDL_Delay(50);
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_EVENT_QUIT) quit = true;
+			if (event.type == SDL_EVENT_KEY_UP) {
+				if (event.key.key == SDLK_S) show = !show;
+			}
 		}
 		SDL_RenderClear(global::render);
-		SDL_RenderTexture(global::render, image, NULL, NULL);
+		if (show)
+			SDL_RenderTexture(global::render, image, NULL, NULL);
 		SDL_RenderPresent(global::render);
 	}
 	SDL_DestroyTexture(image);
