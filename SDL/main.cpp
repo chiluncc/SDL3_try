@@ -58,7 +58,6 @@ int main(int argc, char* args) {
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_EVENT_QUIT) quit = true;
 		}
-
 		SDL_RenderClear(global::render);
 		SDL_RenderTexture(global::render, image, NULL, NULL);
 		SDL_RenderPresent(global::render);
