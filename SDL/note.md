@@ -36,11 +36,14 @@ Renderer 管线（GPU渲染）:
 
 ## 一些常用函数
 
+- `SDL_CreateWindowAndRenderer` 同时创建窗口和对应的`Render`。
 - `SDL_Delay` SDL版本的sleep，且**仅仅阻塞当前线程**。
-- `SDL_GetTicks` 获取时刻，以Uint64形式返回。
+- `SDL_GetTicks` 获取时刻（1e-3），以Uint64形式返回。
+- `SDL_GetTicksNS` 获取时刻（1e-9），以Uint64形式返回。
 - `SDL_Log` Log输出，接收一个`const char*`。
 - `SDL_GetError` 获取最新的错误（不是队列也不是堆栈，近唯一空间）。
-- `SDL_zero` 将某个对象对应空间置为全0，用于规避不同系统对于初始化的不同填充方式
+- `SDL_zero` 将某个对象对应空间置为全0，用于规避不同系统对于初始化的不同填充方式。
+- `SDL_SetRenderVSync` 将某`Render`设置为垂直同步，与显示器刷新率保持一致
 
 ## SDL3简单加载卸载
 
@@ -79,8 +82,16 @@ Renderer 管线（GPU渲染）:
 - `TTF_CloseFont`
 - `TTF_Quit`
 
-## Mouse状态
+## 按键状态
 
 - `SDL_GetMouseState` 捕获鼠标坐标
+- `SDL_GetModState` 获取`ctrl` `alt`等特殊按键的状态
 
 > 其他的操作通过`SDL_PullEvent`获取
+
+## 文字输入
+
+- `SDL_StartTextInput` 开启指定`Window`的文字输入功能
+- `SDL_SetClipboardText` 将字符串加入粘贴板
+- `SDL_GetClipboardText` 从粘贴板读取字符串
+- `SDL_StopTextInput` 终止指定`Window`的文字输入功能

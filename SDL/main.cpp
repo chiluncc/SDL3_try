@@ -1,13 +1,14 @@
 #include <iostream>
 #include <string>
+#include <sstream>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
-#include <sstream>
 
-const Uint64 WIDTH = 800;
-const Uint64 HEIGHT = 600;
+constexpr Uint64 WIDTH = 800;
+constexpr Uint64 HEIGHT = 600;
+constexpr Uint64 FPS = 60;
 
 namespace global {
 	SDL_Window* window = nullptr;
