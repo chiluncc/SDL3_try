@@ -1,8 +1,13 @@
 #include <iostream>
 #include <string>
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_main.h>
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
+#include <sstream>
+
+const Uint64 WIDTH = 800;
+const Uint64 HEIGHT = 600;
 
 namespace global {
 	SDL_Window* window = nullptr;
@@ -32,70 +37,62 @@ void global::quit() {
 	SDL_Quit();
 }
 
-SDL_Texture* loadImage(std::string);
-SDL_Texture* loadFont(std::string);
-int main(int argc, char* args) {
+class TimeDisplay {
+public:
+	TimeDisplay() {
+		font = TTF_OpenFont("fonts/ShinyCrystal.ttf", 64);
+	}
+	void quit() {
+		TTF_CloseFont(font);
+	}
+	void display(SDL_Renderer* render, Uint64 curTime) {
+		std::stringstream curTimeText;
+		curTimeText << curTime;
+		SDL_Surface* surface = TTF_RenderText_Blended(this->font, curTimeText.str().c_str(), 0, SDL_Color{ 255, 0, 0, 255 });
+		SDL_Texture* texture = SDL_CreateTextureFromSurface(render, surface);
+		SDL_FRect rect{ (WIDTH - surface->w) / 2, (HEIGHT - surface->h) / 2, surface->w, surface->h };
+		SDL_RenderTexture(render, texture, nullptr, &rect);
+		SDL_DestroySurface(surface);
+		SDL_DestroyTexture(texture);
+	}
+private:
+	TTF_Font* font;
+};
+
+int main(int argc, char* argv[]) {
 	if (!SDL_Init(SDL_INIT_VIDEO)) {
 		std::cerr << "SDL init error" << std::endl;
 		exit(-1);
 	}
 	if (!TTF_Init()) SDL_Log("TTF init error");
-	global::init(800, 600, SDL_WINDOW_RESIZABLE);
-
-	//auto image = loadImage("pics/p1.png");
-	auto image = loadFont("hello");
+	global::init(WIDTH, HEIGHT, NULL);
 	
 	bool quit = false;
 	SDL_Event event;
 	SDL_zero(event);
-	bool show = false;
+
+	TimeDisplay display;
+	bool startTiming = false;
+	Uint64 nextTime = 0, curTime = 0;
 	while (!quit) {
 		SDL_Delay(50);
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_EVENT_QUIT) quit = true;
 			else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-				SDL_Log("button down");
-				show = !show;
-			}
-			else if (event.type = SDL_EVENT_MOUSE_MOTION) {
-				float x, y;
-				SDL_GetMouseState(&x, &y);
-				SDL_Log("x=%f, y=%f", x, y);
+				if (!startTiming)
+					nextTime = SDL_GetTicks() + 1000;
+				startTiming = true;
 			}
 		}
 		SDL_RenderClear(global::render);
-		if (show) {
-			SDL_FRect area1 = SDL_FRect(0, 0, 400, 400);
-			SDL_FRect area2 = SDL_FRect(200, 0, 400, 400);
-			SDL_RenderTexture(global::render, image, nullptr, &area1);
-			SDL_RenderTexture(global::render, image, nullptr, &area2);
+		if (startTiming && SDL_GetTicks() > nextTime) {
+			curTime += 1000;
+			nextTime = SDL_GetTicks() + 1000;
 		}
+		display.display(global::render, curTime / 1000);
 		SDL_RenderPresent(global::render);
 	}
-	SDL_DestroyTexture(image);
-	image = nullptr;
 
 	global::quit();
 	return 0;
-}
-
-SDL_Texture* loadFont(std::string fonts) {
-	TTF_Font* font = TTF_OpenFont("fonts/ShinyCrystal.ttf", 14);
-	SDL_Surface* surface = TTF_RenderText_Blended(font, fonts.c_str(), 0, SDL_Color{255u, 128u, 255u, 255u});
-	SDL_Texture* texture = SDL_CreateTextureFromSurface(global::render, surface);
-	SDL_DestroySurface(surface);
-	TTF_CloseFont(font);
-	return texture;
-}
-
-SDL_Texture* loadImage(std::string path) {
-	SDL_Surface* surface = nullptr;
-	if (!(surface = IMG_Load(path.c_str()))) SDL_Log("Error Picture Path");
-	//SDL_SetSurfaceColorKey(surface, true, SDL_MapSurfaceRGB(surface, 0XC7, 0XCF, 0XDC));
-	SDL_Texture* texture = SDL_CreateTextureFromSurface(global::render, surface);
-	SDL_DestroySurface(surface);
-	//SDL_SetTextureColorMod(texture, 0u, 0u, 255u);
-	SDL_SetTextureAlphaMod(texture, 64u);
-	SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
-	return texture;
 }

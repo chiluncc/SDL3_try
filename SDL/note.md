@@ -37,6 +37,7 @@ Renderer 管线（GPU渲染）:
 ## 一些常用函数
 
 - `SDL_Delay` SDL版本的sleep，且**仅仅阻塞当前线程**。
+- `SDL_GetTicks` 获取时刻，以Uint64形式返回。
 - `SDL_Log` Log输出，接收一个`const char*`。
 - `SDL_GetError` 获取最新的错误（不是队列也不是堆栈，近唯一空间）。
 - `SDL_zero` 将某个对象对应空间置为全0，用于规避不同系统对于初始化的不同填充方式
@@ -64,22 +65,22 @@ Renderer 管线（GPU渲染）:
 
 ## Texture操作
 
-* `SDL_SetSurfaceColorKey` 设置颜色精灵（是对Surface进行操作）
-* `SDL_RenderTextureRotated` 以旋转结果绘制在缓冲区，不是返回新的 `Texture`，先旋转再翻转，角度制
-* `SDL_SetTextureColorMod` 混色方式为`srcC = srcC * (color / 255)` 
-* `SDL_SetTextureAlphaMod` 更改`Alpha`值
-* `SDL_SetTextureBlendMode` 设置混色方案（当前`Texture`被绘制在缓冲区时起作用）
+- `SDL_SetSurfaceColorKey` 设置颜色精灵（是对Surface进行操作）
+- `SDL_RenderTextureRotated` 以旋转结果绘制在缓冲区，不是返回新的 `Texture`，先旋转再翻转，角度制
+- `SDL_SetTextureColorMod` 混色方式为`srcC = srcC * (color / 255)` 
+- `SDL_SetTextureAlphaMod` 更改`Alpha`值
+- `SDL_SetTextureBlendMode` 设置混色方案（当前`Texture`被绘制在缓冲区时起作用）
 
 ## Font操作
 
-* `TTF_Init`
-* `TTF_OpenFont`
-* `TTF_RenderText_Blended` 注意这里得到的`Surface`需要转化为`Texture`
-* `TTF_CloseFont`
-* `TTF_Quit`
+- `TTF_Init`
+- `TTF_OpenFont`
+- `TTF_RenderText_Blended` 注意这里得到的`Surface`需要转化为`Texture`
+- `TTF_CloseFont`
+- `TTF_Quit`
 
 ## Mouse状态
 
-* `SDL_GetMouseState` 捕获鼠标坐标
+- `SDL_GetMouseState` 捕获鼠标坐标
 
 > 其他的操作通过`SDL_PullEvent`获取
