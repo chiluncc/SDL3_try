@@ -68,3 +68,11 @@ Renderer 管线（GPU渲染）:
 * `SDL_SetTextureColorMod` 混色方式为`srcC = srcC * (color / 255)` 
 * `SDL_SetTextureAlphaMod` 更改`Alpha`值
 * `SDL_SetTextureBlendMode` 设置混色方案（当前`Texture`被绘制在缓冲区时起作用）
+
+## Font操作
+
+* `TTF_Init`
+* `TTF_OpenFont`
+* `TTF_RenderText_Blended` 注意这里得到的`Surface`需要转化为`Texture`
+* `TTF_CloseFont`
+* `TTF_Quit`
