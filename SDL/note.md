@@ -2,7 +2,8 @@
 
 ## 坐标系统
 
-屏幕坐标采用`Direct`同款, 即`left-up`为原点
+屏幕坐标采用`Direct`同款, 即`left-up`为原点。
+屏幕坐标大小为`height * width`，而非0-1。
 
 ## SDL3的两套渲染管线
 
@@ -76,3 +77,9 @@ Renderer 管线（GPU渲染）:
 * `TTF_RenderText_Blended` 注意这里得到的`Surface`需要转化为`Texture`
 * `TTF_CloseFont`
 * `TTF_Quit`
+
+## Mouse状态
+
+* `SDL_GetMouseState` 捕获鼠标坐标
+
+> 其他的操作通过`SDL_PullEvent`获取

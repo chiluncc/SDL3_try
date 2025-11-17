@@ -53,8 +53,14 @@ int main(int argc, char* args) {
 		SDL_Delay(50);
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_EVENT_QUIT) quit = true;
-			if (event.type == SDL_EVENT_KEY_UP) {
-				if (event.key.key == SDLK_S) show = !show;
+			else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+				SDL_Log("button down");
+				show = !show;
+			}
+			else if (event.type = SDL_EVENT_MOUSE_MOTION) {
+				float x, y;
+				SDL_GetMouseState(&x, &y);
+				SDL_Log("x=%f, y=%f", x, y);
 			}
 		}
 		SDL_RenderClear(global::render);
