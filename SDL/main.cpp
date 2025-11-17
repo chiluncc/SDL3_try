@@ -65,7 +65,7 @@ int main(int argc, char* args) {
 		SDL_RenderClear(global::render);
 		if (show) {
 			SDL_FRect area = SDL_FRect(0, 0,600, 600);
-			SDL_RenderTextureRotated(global::render, image, nullptr, &area, 15.0, nullptr, SDL_FLIP_VERTICAL);
+			SDL_RenderTextureRotated(global::render, image, nullptr, &area, 180.0, nullptr, SDL_FLIP_VERTICAL);
 		}
 		SDL_RenderPresent(global::render);
 	}
