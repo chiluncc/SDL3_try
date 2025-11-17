@@ -63,8 +63,10 @@ int main(int argc, char* args) {
 			}
 		}
 		SDL_RenderClear(global::render);
-		if (show)
-			SDL_RenderTexture(global::render, image, NULL, NULL);
+		if (show) {
+			SDL_FRect area = SDL_FRect(0, 0,600, 600);
+			SDL_RenderTexture(global::render, image, nullptr, &area);
+		}
 		SDL_RenderPresent(global::render);
 	}
 	SDL_DestroyTexture(image);
