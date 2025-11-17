@@ -1,3 +1,9 @@
+# SDL3
+
+## 坐标系统
+
+屏幕坐标采用`Direct`同款, 即`left-up`为原点
+
 ## SDL3的两套渲染管线
 
 ```c
@@ -40,6 +46,7 @@ Renderer 管线（GPU渲染）:
 - `SDL_CreateWindow` 与SDL2不同，SDL3不再需要繁杂的初始化参数，名称，大小和功能标识就够了
 - `SDL_CreateRenderer` 获取`Window`对应的`Render`。
 - `SDL_PollEvent` 获取事件（使用时事件会先被底层系统处理）
+- `SDL_SetRenderDrawColor` 设置清空所用颜色
 - `SDL_RenderClear` 清空缓冲
 - `SDL_RenderPresent` 交换缓冲
 - `SDL_DestroyRenderer`
@@ -53,3 +60,7 @@ Renderer 管线（GPU渲染）:
 - `SDL_DestroySurface`
 - `SDL_RenderTexture` 以`Texture`填充
 - `SDL_DestroyTexture`
+
+**额外功能**
+
+* `SDL_SetSurfaceColorKey` 设置颜色精灵（是对Surface进行操作）

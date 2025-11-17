@@ -48,7 +48,7 @@ int main(int argc, char* args) {
 	}
 	global::init(800, 600, SDL_WINDOW_RESIZABLE);
 
-	auto image = loadImage("C:\\Users\\lenovo\\Desktop\\ceaabff28120b60ef3c9e6dd3ac74943.png");
+	auto image = loadImage("pics/p1.png");
 	
 	bool quit = false;
 	SDL_Event event;
@@ -77,6 +77,7 @@ int main(int argc, char* args) {
 SDL_Texture* loadImage(std::string path) {
 	SDL_Surface* surface = nullptr;
 	if (!(surface = IMG_Load(path.c_str()))) global::error("Error Picture Path");
+	SDL_SetSurfaceColorKey(surface, true, SDL_MapSurfaceRGB(surface, 0XC7, 0XCF, 0XDC));
 	SDL_Texture* texture = SDL_CreateTextureFromSurface(global::render, surface);
 	SDL_DestroySurface(surface);
 	return texture;
