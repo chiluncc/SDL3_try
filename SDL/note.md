@@ -64,3 +64,4 @@ Renderer 管线（GPU渲染）:
 **额外功能**
 
 * `SDL_SetSurfaceColorKey` 设置颜色精灵（是对Surface进行操作）
+* `SDL_RenderTextureRotated` 以旋转结果绘制在画板上，不是返回新的 `Texture`，先旋转再翻转，角度制
