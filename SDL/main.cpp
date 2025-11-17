@@ -64,8 +64,10 @@ int main(int argc, char* args) {
 		}
 		SDL_RenderClear(global::render);
 		if (show) {
-			SDL_FRect area = SDL_FRect(0, 0,600, 600);
-			SDL_RenderTextureRotated(global::render, image, nullptr, &area, 180.0, nullptr, SDL_FLIP_VERTICAL);
+			SDL_FRect area1 = SDL_FRect(0, 0, 400, 400);
+			SDL_FRect area2 = SDL_FRect(200, 0, 400, 400);
+			SDL_RenderTexture(global::render, image, nullptr, &area1);
+			SDL_RenderTexture(global::render, image, nullptr, &area2);
 		}
 		SDL_RenderPresent(global::render);
 	}
@@ -79,8 +81,11 @@ int main(int argc, char* args) {
 SDL_Texture* loadImage(std::string path) {
 	SDL_Surface* surface = nullptr;
 	if (!(surface = IMG_Load(path.c_str()))) global::error("Error Picture Path");
-	SDL_SetSurfaceColorKey(surface, true, SDL_MapSurfaceRGB(surface, 0XC7, 0XCF, 0XDC));
+	//SDL_SetSurfaceColorKey(surface, true, SDL_MapSurfaceRGB(surface, 0XC7, 0XCF, 0XDC));
 	SDL_Texture* texture = SDL_CreateTextureFromSurface(global::render, surface);
 	SDL_DestroySurface(surface);
+	//SDL_SetTextureColorMod(texture, 0u, 0u, 255u);
+	SDL_SetTextureAlphaMod(texture, 64u);
+	SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
 	return texture;
 }

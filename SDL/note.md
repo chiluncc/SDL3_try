@@ -61,7 +61,10 @@ Renderer 管线（GPU渲染）:
 - `SDL_RenderTexture` 以`Texture`填充
 - `SDL_DestroyTexture`
 
-**额外功能**
+## Texture操作
 
 * `SDL_SetSurfaceColorKey` 设置颜色精灵（是对Surface进行操作）
-* `SDL_RenderTextureRotated` 以旋转结果绘制在画板上，不是返回新的 `Texture`，先旋转再翻转，角度制
+* `SDL_RenderTextureRotated` 以旋转结果绘制在缓冲区，不是返回新的 `Texture`，先旋转再翻转，角度制
+* `SDL_SetTextureColorMod` 混色方式为`srcC = srcC * (color / 255)` 
+* `SDL_SetTextureAlphaMod` 更改`Alpha`值
+* `SDL_SetTextureBlendMode` 设置混色方案（当前`Texture`被绘制在缓冲区时起作用）
