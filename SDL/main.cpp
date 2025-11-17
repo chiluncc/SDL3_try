@@ -8,7 +8,6 @@ namespace global {
 	SDL_Window* window = nullptr;
 	SDL_Renderer* render = nullptr;
 	void error();
-	void error(std::string);
 	void init(const int, const int, const Uint64);
 	void quit();
 }
@@ -16,14 +15,6 @@ namespace global {
 void global::error() {
 	std::string error = SDL_GetError();
 	SDL_Log(error.c_str());
-	SDL_Quit();
-	exit(-1);
-}
-
-void global::error(std::string s) {
-	SDL_Log(s.c_str());
-	SDL_Quit();
-	exit(-1);
 }
 
 void global::init(const int width, const int height, const Uint64 flag) {
@@ -37,18 +28,22 @@ void global::quit() {
 	global::render = nullptr;
 	SDL_DestroyWindow(global::window);
 	global::window = nullptr;
+	TTF_Quit();
 	SDL_Quit();
 }
 
 SDL_Texture* loadImage(std::string);
+SDL_Texture* loadFont(std::string);
 int main(int argc, char* args) {
 	if (!SDL_Init(SDL_INIT_VIDEO)) {
 		std::cerr << "SDL init error" << std::endl;
 		exit(-1);
 	}
+	if (!TTF_Init()) SDL_Log("TTF init error");
 	global::init(800, 600, SDL_WINDOW_RESIZABLE);
 
-	auto image = loadImage("pics/p1.png");
+	//auto image = loadImage("pics/p1.png");
+	auto image = loadFont("hello");
 	
 	bool quit = false;
 	SDL_Event event;
@@ -78,9 +73,18 @@ int main(int argc, char* args) {
 	return 0;
 }
 
+SDL_Texture* loadFont(std::string fonts) {
+	TTF_Font* font = TTF_OpenFont("fonts/ShinyCrystal.ttf", 14);
+	SDL_Surface* surface = TTF_RenderText_Blended(font, fonts.c_str(), 0, SDL_Color{255u, 128u, 255u, 255u});
+	SDL_Texture* texture = SDL_CreateTextureFromSurface(global::render, surface);
+	SDL_DestroySurface(surface);
+	TTF_CloseFont(font);
+	return texture;
+}
+
 SDL_Texture* loadImage(std::string path) {
 	SDL_Surface* surface = nullptr;
-	if (!(surface = IMG_Load(path.c_str()))) global::error("Error Picture Path");
+	if (!(surface = IMG_Load(path.c_str()))) SDL_Log("Error Picture Path");
 	//SDL_SetSurfaceColorKey(surface, true, SDL_MapSurfaceRGB(surface, 0XC7, 0XCF, 0XDC));
 	SDL_Texture* texture = SDL_CreateTextureFromSurface(global::render, surface);
 	SDL_DestroySurface(surface);
