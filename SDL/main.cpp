@@ -1,99 +1,121 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <vector>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
-#include <SDL3_image/SDL_image.h>
-#include <SDL3_ttf/SDL_ttf.h>
 
-constexpr Uint64 WIDTH = 800;
-constexpr Uint64 HEIGHT = 600;
-constexpr Uint64 FPS = 60;
+constexpr Uint64 WIDTH = 1600;
+constexpr Uint64 HEIGHT = 1200;
 
-namespace global {
-	SDL_Window* window = nullptr;
-	SDL_Renderer* render = nullptr;
-	void error();
-	void init(const int, const int, const Uint64);
-	void quit();
-}
-
-void global::error() {
-	std::string error = SDL_GetError();
-	SDL_Log(error.c_str());
-}
-
-void global::init(const int width, const int height, const Uint64 flag) {
-	global::window = SDL_CreateWindow("SDL3", width, height, flag);
-	global::render = SDL_CreateRenderer(window, nullptr);
-	if (!global::window) global::error();
-}
-
-void global::quit() {
-	SDL_DestroyRenderer(global::render);
-	global::render = nullptr;
-	SDL_DestroyWindow(global::window);
-	global::window = nullptr;
-	TTF_Quit();
-	SDL_Quit();
-}
-
-class TimeDisplay {
-public:
-	TimeDisplay() {
-		font = TTF_OpenFont("fonts/ShinyCrystal.ttf", 64);
+SDL_GPUShader* buildShader(SDL_GPUDevice* device, const char* path, const SDL_GPUShaderStage stage) {
+	SDL_IOStream* f = SDL_IOFromFile(path, "rb");
+	if (!f) {
+		SDL_Log("Failed to open %s", path);
+		return {};
 	}
-	void quit() {
-		TTF_CloseFont(font);
+
+	Sint64 size = SDL_GetIOSize(f);
+	std::vector<Uint8> data(size);
+	SDL_ReadIO(f, data.data(), size);
+	SDL_CloseIO(f);
+	SDL_GPUShaderCreateInfo info;
+	SDL_zero(info);
+	info.format = SDL_GPU_SHADERFORMAT_SPIRV;
+	info.stage = stage;
+	info.code = data.data();
+	info.code_size = data.size();
+	SDL_GPUShader* shader = nullptr;
+	shader = SDL_CreateGPUShader(device, &info);
+	if (!shader) {
+		SDL_Log(SDL_GetError());
+		return nullptr;
 	}
-	void display(SDL_Renderer* render, Uint64 curTime) {
-		std::stringstream curTimeText;
-		curTimeText << curTime;
-		SDL_Surface* surface = TTF_RenderText_Blended(this->font, curTimeText.str().c_str(), 0, SDL_Color{ 255, 0, 0, 255 });
-		SDL_Texture* texture = SDL_CreateTextureFromSurface(render, surface);
-		SDL_FRect rect{ (WIDTH - surface->w) / 2, (HEIGHT - surface->h) / 2, surface->w, surface->h };
-		SDL_RenderTexture(render, texture, nullptr, &rect);
-		SDL_DestroySurface(surface);
-		SDL_DestroyTexture(texture);
+	return shader;
+}
+
+SDL_GPUBuffer* uploadData(SDL_GPUDevice* device) {
+	float datas[15] = {
+	   0.0f,  0.5f, 1.0f, 0.0f, 0.0f,
+	   0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+	   -0.5f, -0.5f, 0.0f, 0.0f, 1.0f
+	};
+
+	SDL_GPUTransferBufferCreateInfo tinfo;
+	tinfo.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
+	tinfo.size = 15 * sizeof(float);
+	SDL_GPUTransferBuffer* staging = SDL_CreateGPUTransferBuffer(device, &tinfo);
+
+	SDL_GPUBufferCreateInfo vbinfo;
+	vbinfo.usage = SDL_GPU_BUFFERUSAGE_VERTEX;
+	vbinfo.size = 15 * sizeof(float);
+	SDL_GPUBuffer* vertexBuffer = SDL_CreateGPUBuffer(device, &vbinfo);
+
+	void* ptr = SDL_MapGPUTransferBuffer(device, staging, false);
+	memcpy(ptr, datas, 15 * sizeof(float));
+	SDL_UnmapGPUTransferBuffer(device, staging);
+
+	SDL_GPUCommandBuffer* cmd = SDL_AcquireGPUCommandBuffer(device);
+	SDL_GPUCopyPass* copy = SDL_BeginGPUCopyPass(cmd);
+	SDL_GPUTransferBufferLocation src;
+	src.transfer_buffer = staging;
+	src.offset = 0;
+	SDL_GPUBufferRegion dst;
+	dst.buffer = vertexBuffer;
+	dst.offset = 0;
+	dst.size = 15 * sizeof(float);
+	SDL_UploadToGPUBuffer(copy, &src, &dst, false);
+	SDL_EndGPUCopyPass(copy);
+	SDL_SubmitGPUCommandBuffer(cmd);
+	return vertexBuffer;
+}
+
+bool handleEvent() {
+	static SDL_Event event;
+	static bool quit = false;
+	SDL_zero(event);
+	SDL_PollEvent(&event);
+	switch (event.type) {
+		case SDL_EVENT_QUIT:
+			quit = true;
+			break;
+		default:
+			break;
 	}
-private:
-	TTF_Font* font;
-};
+	return quit;
+}
 
 int main(int argc, char* argv[]) {
 	if (!SDL_Init(SDL_INIT_VIDEO)) {
-		std::cerr << "SDL init error" << std::endl;
+		std::cout << "SDL init failed" << std::endl;
 		exit(-1);
 	}
-	if (!TTF_Init()) SDL_Log("TTF init error");
-	global::init(WIDTH, HEIGHT, NULL);
+	SDL_GPUDevice* device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, true, "vulkan");
+	if (!device) {
+		SDL_Log(SDL_GetError());
+		SDL_Quit();
+		exit(-1);
+	}
+	SDL_Window* window = SDL_CreateWindow("SDL GPU Render", WIDTH, HEIGHT, NULL);
+	SDL_ClaimWindowForGPUDevice(device, window);
 	
-	bool quit = false;
-	SDL_Event event;
-	SDL_zero(event);
-
-	TimeDisplay display;
-	bool startTiming = false;
-	Uint64 nextTime = 0, curTime = 0;
-	while (!quit) {
-		SDL_Delay(50);
-		while (SDL_PollEvent(&event)) {
-			if (event.type == SDL_EVENT_QUIT) quit = true;
-			else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-				if (!startTiming)
-					nextTime = SDL_GetTicks() + 1000;
-				startTiming = true;
-			}
-		}
-		SDL_RenderClear(global::render);
-		if (startTiming && SDL_GetTicks() > nextTime) {
-			curTime += 1000;
-			nextTime = SDL_GetTicks() + 1000;
-		}
-		display.display(global::render, curTime / 1000);
-		SDL_RenderPresent(global::render);
+	SDL_GPUShader* shaderVert = buildShader(device, "glsl/triangle.vert.spv", SDL_GPU_SHADERSTAGE_VERTEX);
+	SDL_GPUShader* shaderFrag = buildShader(device, "glsl/triangle.frag.spv", SDL_GPU_SHADERSTAGE_FRAGMENT);
+	if (!shaderFrag || !shaderVert) {
+		SDL_DestroyWindow(window);
+		SDL_DestroyGPUDevice(device);
+		SDL_Quit();
 	}
 
-	global::quit();
+	uploadData(device);
+
+
+
+	SDL_Event event;
+	SDL_zero(event);
+	bool quit = false;
+	while (!quit) {
+		quit = handleEvent();
+	}
 	return 0;
 }

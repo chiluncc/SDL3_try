@@ -95,3 +95,54 @@ Renderer 管线（GPU渲染）:
 - `SDL_SetClipboardText` 将字符串加入粘贴板
 - `SDL_GetClipboardText` 从粘贴板读取字符串
 - `SDL_StopTextInput` 终止指定`Window`的文字输入功能
+
+---
+
+从此开始，开始使用SDL3的新GPU渲染功能。
+
+## 文件读取
+
+- `SDL_IOFromFile` 打开文件
+- `SDL_GetIOSize` 获取流大小
+- `SDL_ReadIO` 流读取
+- `SDL_CloseIO` 关闭文件
+
+以下为示例
+
+```cpp
+std::vector<Uint8> loadFile(const char* path) {
+	SDL_IOStream* f = SDL_IOFromFile(path, "rb");
+	if (!f) {
+		SDL_Log("Failed to open %s", path);
+		return {};
+	}
+
+	Sint64 size = SDL_GetIOSize(f);
+	std::vector<Uint8> data(size);
+	SDL_ReadIO(f, data.data(), size);
+	SDL_CloseIO(f);
+	return data;
+}
+```
+
+## 基本流程
+
+- `SDL_CreateGPUDevice` 创建`GPU`上下文。
+- `SDL_ClaimWindowForGPUDevice` 将上下文与窗口绑定。
+- 使用 `glslangValidator` 将 `hlsl` 文件编译为 `spv` 文件。
+	```bat
+	glslangValidator -V --invert-y -o .\SDL\glsl\triangle.frag.spv -e main .\SDL\glsl\triangle.frag.hlsl
+	```
+	* `-V` 编译为`SPIR-V`
+	* `--invert-y` 屏幕Y轴反转，符合`Yulkan`屏幕空间定义
+	* `-e` 指定入口函数
+- `SDL_GPUShaderCreateInfo` 创建初始`Shader`所用的信息
+	* 必填字段：`format` `stage` `code` `code_size`
+	```cpp
+	info.format = SDL_GPU_SHADERFORMAT_SPIRV;
+	info.stage = stage;
+	info.code = data.data();
+	info.code_size = data.size();
+	```
+- `SDL_CreateGPUShader` 创建`Shader`。
+- 
