@@ -85,6 +85,7 @@ SDL_GPUBuffer* uploadData(SDL_GPUDevice* device) {
     SDL_GPUTransferBufferLocation src;
     SDL_zero(src);
     src.transfer_buffer = staging;
+    src.offset = 0;
 
     SDL_GPUBufferRegion dst;
     SDL_zero(dst);
@@ -105,7 +106,7 @@ int main(int argc, char* argv[]) {
     if (!SDL_Init(SDL_INIT_VIDEO)) { return -1; }
 
     SDL_GPUDevice* device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, true, NULL);
-    SDL_Window* window = SDL_CreateWindow("SDL3 Triangle", WIDTH, HEIGHT, 0);
+    SDL_Window* window = SDL_CreateWindow("SDL3 Triangle", WIDTH, HEIGHT, SDL_WINDOW_RESIZABLE);
     SDL_ClaimWindowForGPUDevice(device, window);
 
     // 1. 加载着色器

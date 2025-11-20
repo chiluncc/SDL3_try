@@ -100,6 +100,34 @@ Renderer 管线（GPU渲染）:
 
 从此开始，开始使用SDL3的新GPU渲染功能。
 
+## 一些约定
+
+
+### 立即销毁和延迟释放
+
+- `XXX-Destroy--XXX`立即释放。
+- `XXX-Release-XXX`延迟释放（当无引用计数后才真正释放）
+- `SDL_DestroyGPUDevice` 延迟释放，且为阻塞同步点，会等待所有`GPU`相关动作结束。
+
+### 关于GPU
+
+- `GPU`是一个状态机。这意味着一旦你设定了一个状态，它就会一直保持，直到你再次修改它。
+- 一切操作基于起始地址和数据长度，没有“结构”一说，所以哪怕传入数据非数组也要指出长度为1。
+
+### 关于缓冲区
+
+`Vulkan`显式的提供了三片存储区
+- `User Host Memory` CPU私有内存（Zone1）
+- `Staging` 暂存/中转（Zone2）
+- `Device Local Memory` GPU私有内存（Zone3）
+
+**数据传输方式**
+
+- `Zone1` --> `Zone2`
+	CPU指令(Load/Store) + MMU(内存管理单元) + 缓存一致性协议，CPU一直在干活
+- `Zone2` --> `Zone3`
+	PCIe总线，DMA方式
+
 ## 文件读取
 
 - `SDL_IOFromFile` 打开文件
@@ -125,6 +153,47 @@ std::vector<Uint8> loadFile(const char* path) {
 }
 ```
 
+### HLSL约定
+
+顶点着色器输入
+
+|语义|意义|说明|
+|:-:|:-:|:-:|
+|`SV_VertexID`|顶点索引（从Draw Call产生）|不依赖实际顶点数据，可以用于 procedural geometry|
+|`SV_InstanceID`|实例索引|实例化渲染使用|
+|`SV_VertexIndex`|与SV_VertexID类似|现代API中与VertexID等价|
+|`SV_IsFrontFace`|面朝向（正面/背面）|用于几何相关计算，VS中通常不使用（GS/PS常用）|
+|`SV_CullPrimitive`|用于可变着色模型的面剔除指示|DX12可用|
+
+顶点着色器输出
+
+|语义|意义|说明|
+|:-:|:-:|:-:|
+|`SV_Position`|变换后的裁剪空间位置 (clip-space position)|必须至少输出一个 SV_Position 给光栅化阶段|
+
+像素着色器输入
+
+|语义|意义|说明|
+|:-:|:-:|:-:|
+|`SV_Position`|像素中心的屏幕空间坐标 (float4)|光栅化自动产生|
+|`SV_PrimitiveID`|图元ID|GS/PS都可使用|
+|`SV_IsFrontFace`|当前像素属于正面或背面|用于双面着色|
+|`SV_SampleIndex`|当前样本顶点|仅在多重采样中|
+|`SV_Coverage`|像素覆盖率掩码|仅在MSAA模式|
+|`SV_ClipDistanceX / SV_CullDistanceX`|裁剪距离|继承自VS输出|
+
+像素着色器输出
+
+|语义|意义|说明|
+|:-:|:-:|:-:|
+|`SV_Target / SV_Target0`|写入渲染目标（颜色缓冲区）|常用|
+|`SV_Target1..N`|MRT 多渲染目标|写入多个 RT|
+|`SV_Depth`|输出自定义深度值|替换硬件自动计算的深度|
+|`SV_DepthLessEqual / SV_DepthGreaterEqual`|深度写入规则特殊化|DX11.3+|
+|`SV_StencilRef`|写自定义模板值|DX11.3+|
+
+> 只有顶点着色器的输出`SV_Position`是必须的
+
 ## 基本流程
 
 - `SDL_CreateGPUDevice` 创建`GPU`上下文。
@@ -144,5 +213,13 @@ std::vector<Uint8> loadFile(const char* path) {
 	info.code = data.data();
 	info.code_size = data.size();
 	```
-- `SDL_CreateGPUShader` 创建`Shader`。
-- 
+- 创建`Shader`。
+- 上传数据
+- 绑定`slot`和`location`解释和对应关系
+- 组件`pipline`
+- 创建`pass`，明确`slot`和真实`buffer`对应关系，输出屏幕等信息
+- 开始循环绘制
+
+此流程由下图所示
+
+![whole pipline](./notePics/SDL3Pipline.png)
