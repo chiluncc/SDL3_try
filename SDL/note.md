@@ -192,7 +192,7 @@ std::vector<Uint8> loadFile(const char* path) {
 |`SV_DepthLessEqual / SV_DepthGreaterEqual`|深度写入规则特殊化|DX11.3+|
 |`SV_StencilRef`|写自定义模板值|DX11.3+|
 
-> 只有顶点着色器的输出`SV_Position`是必须的
+> 只有输出（顶点）输入（像素）`SV_Position`是必须的
 
 ## 基本流程
 
@@ -223,3 +223,43 @@ std::vector<Uint8> loadFile(const char* path) {
 此流程由下图所示
 
 ![whole pipline](./notePics/SDL3Pipline.png)
+
+## 槽位空间和数据
+
+### 顶点输入槽位
+
+没有类型之分，没有`space` `b` `t`等区分，上图的流程使用的就是顶点输入槽位。
+在`HLSL`表现为没有`register`的主函数输入。
+
+### 像素输入槽位
+
+来自上一阶段`GPU`数据，无法通过`CPU`控制和外部数据传入。
+在`HLSL`表现为没有`register`的主函数输入。
+
+### 资源槽位
+
+|名称|描述|
+|:-:|:-:|
+|`space`|命名空间，描述表指针|
+|`t[n]`|表示着色器资源视图 (SRV)|
+|`s[n]`|表示采样器|
+|`u[n]`|表示无序访问视图 (UAV)|
+|`b[n]`|表示常量缓冲区视图 (CBV)|
+
+> `t` `s` `u` `b` 槽位相互独立，互不干扰。
+
+### HLSL转SPIR-V
+
+- `space`被转为`Descriptor Set`
+- `tsub`被转为`Binding`**相同编号会转为同一个`Binding`**。
+
+> `tsub`在物理硬件根本不存在，这些都是`HLSL`用来标记不同类型数据的标识符，方便其操作数据时能使用与数据最匹配的操作函数，以加速或优化操作。
+
+> `SPIR-V`不仅仅是记录了`binding`编号，它还通过类型系统和 操作指令完美地继承了`HLSL`的意图。
+
+```hlsl
+struct Input {
+    float3 pos : POSITION;   // 编译器通常自动分配为 Location 0
+    float2 uv  : TEXCOORD0;  // 编译器通常自动分配为 Location 1
+};
+```
